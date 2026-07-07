@@ -1,0 +1,37 @@
+---
+interface Props {
+	src: string;
+	title?: string;
+	poster?: string;
+	caption?: string;
+	aspect?: `${number}/${number}`;
+}
+
+const { src, title = 'Embedded video', poster, caption, aspect = '16/9' } = Astro.props;
+
+function getEmbedUrl(value: string) {
+	const url = new URL(value);
+	if (url.hostname.includes('youtube.com')) {
+		const id = url.searchParams.get('v');
+		return id ? `https://www.youtube-nocookie.com/embed/${id}` : value;
+	}
+	if (url.hostname === 'youtu.be') return `https://www.youtube-nocookie.com/embed/${url.pathname.slice(1)}`;
+	if (url.hostname.includes('vimeo.com')) return `https://player.vimeo.com/video/${url.pathname.slice(1)}`;
+	return value;
+}
+
+const isEmbed = /^https?:\/\//.test(src) && !/\.(mp4|webm|ogg)$/i.test(src);
+const embedSrc = isEmbed ? getEmbedUrl(src) : src;
+---
+
+<figure class="mdx-video" style={`--video-aspect: ${aspect};`}>
+	{
+		isEmbed ? (
+			<iframe src={embedSrc} title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+		) : (
+			<video src={src} poster={poster} controls preload="metadata" />
+		)
+	}
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>
+

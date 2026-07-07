@@ -1,0 +1,150 @@
+---
+title: 'MDX Style Lab: $e^{i\pi} + 1 = 0$'
+description: 'A compact test post for Markdown, LaTeX, code, tables, and MDX components.'
+pubDate: 'Jul 07 2026'
+---
+
+import Callout from '../../components/Callout.astro';
+import Compare from '../../components/mdx/Compare.astro';
+import Problem from '../../components/mdx/Problem.astro';
+import Reveal from '../../components/mdx/Reveal.astro';
+import Video from '../../components/mdx/Video.astro';
+
+This page is a small pressure test for the blog renderer. It should feel like a real note, but every block is here to make the typography confess what it is doing.
+
+<Callout title="MDX component" tone="lab">
+	This block is an Astro component rendered from MDX. It should sit with the prose instead of looking like a pasted widget.
+</Callout>
+
+## Text rhythm
+
+The normal paragraph needs enough line height to breathe, but not so much that technical writing turns into fog. Here is some **bold text**, some _emphasis_, a `small inline token`, and a link to [Zice Wang on GitHub](https://github.com/ZiceWang).
+
+Chinese and English should also mix cleanly: 这是一个中英文混排测试，用来观察标点、行高和链接 [GitHub](https://github.com/ZiceWang) 在正文里的重量。
+
+> A quote should interrupt the rhythm without pretending to be a poster. It needs a clear edge, a little tension, and enough restraint to survive long-form writing.
+
+## Heading with inline math: $F = ma$
+
+Headings can contain inline math too. The title above is authored directly in Markdown, while this post title is authored in frontmatter.
+
+## Lists
+
+1. First ordered item with a short explanation.
+2. Second item with nested-looking content kept as plain prose.
+3. Third item that contains `inline code` and a link.
+
+- Unordered item.
+- Another item with **strong text**.
+- A final item long enough to wrap across lines, because short list items hide almost every spacing problem.
+
+- [x] Styled task item
+- [ ] Unfinished task item
+
+## Code
+
+Inline code should not punch holes in the paragraph. A code block should be readable, aligned, and visually separate from the paper.
+
+```ts
+type DialItem = {
+	label: string;
+	subtitle?: string;
+	href?: string;
+	mode?: 'nav' | 'posts';
+};
+
+export function snapToIndex(index: number, step = 18) {
+	return -index * step;
+}
+```
+
+```svelte
+<script lang="ts">
+	export let label = 'Blog';
+</script>
+
+<button class="dial-item">
+	<span>{label}</span>
+</button>
+```
+
+## Table
+
+| Surface | What it tests | Status |
+| --- | --- | --- |
+| Markdown | Paragraphs, lists, quotes | Good |
+| LaTeX | Inline and display math | Wired |
+| MDX | Imported components | Active |
+| Code | Highlighting and overflow | Needs eyes |
+
+## Math
+
+Inline math should sit on the baseline: $e^{i\pi} + 1 = 0$.
+
+Display math should have enough room without feeling detached from the text:
+
+$$
+\mathcal{L}(\theta) =
+\frac{1}{N}\sum_{i=1}^{N}
+\left\| f_\theta(x_i) - y_i \right\|_2^2
++ \lambda \|\theta\|_1
+$$
+
+And a slightly denser block:
+
+$$
+\operatorname{softmax}(z_i) =
+\frac{\exp(z_i)}
+{\sum_{j=1}^{K}\exp(z_j)}
+$$
+
+## MDX islands
+
+<Callout title="Small warning" tone="warning">
+	This one uses a different tone, so borders, color, and spacing can be checked without adding another layout primitive.
+</Callout>
+
+<Callout title="Plain note">
+	MDX lets the article carry structured components while staying mostly Markdown. The style should not overtake the writing.
+</Callout>
+
+## Reusable component set
+
+<Video
+	src="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+	title="Video component test"
+	caption="A responsive video embed with a caption. Local mp4/webm sources use the native video element."
+/>
+
+<Problem
+	title="Quick check"
+	prompt="Which expression is Euler's identity?"
+	choices={['$a^2 + b^2 = c^2$', '$e^{i\\pi} + 1 = 0$', '$F = ma$']}
+	correctIndex={1}
+	answer="Euler's identity is $e^{i\\pi} + 1 = 0$."
+>
+	This problem component is meant for small interactive checks inside technical posts.
+</Problem>
+
+<Reveal title="Show derivation hint">
+	Start from $e^{ix} = \cos x + i\sin x$, then substitute $x = \pi$.
+</Reveal>
+
+<Compare left="Plain Markdown" right="Component-backed MDX">
+	<div slot="left">
+		Useful for prose, lists, code, tables, and formulas.
+	</div>
+	<div slot="right">
+		Useful for video, interactive checks, revealable hints, and layout patterns Markdown cannot express alone.
+	</div>
+</Compare>
+
+## Footnote and rule
+
+Here is a sentence with a footnote.[^one] The footnote section should not look like an afterthought.
+
+---
+
+That is the end of the lab. If this page looks good, normal posts should be much easier to trust.
+
+[^one]: This is a footnote with enough text to wrap onto a second line on narrow screens.

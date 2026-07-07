@@ -1,0 +1,25 @@
+---
+import ProblemCheck from './ProblemCheck.svelte';
+
+interface Props {
+	title?: string;
+	prompt?: string;
+	choices?: string[];
+	correctIndex?: number;
+	answer?: string;
+}
+
+const { title = 'Problem', prompt, choices = [], correctIndex = 0, answer = '' } = Astro.props;
+---
+
+<section class="mdx-problem">
+	<header>
+		<strong>{title}</strong>
+		{prompt && <p>{prompt}</p>}
+	</header>
+	<div class="problem-body">
+		<slot />
+	</div>
+	<ProblemCheck choices={choices} correctIndex={correctIndex} answer={answer} client:load />
+</section>
+

@@ -1,0 +1,20 @@
+---
+interface Props {
+	left?: string;
+	right?: string;
+}
+
+const { left = 'Before', right = 'After' } = Astro.props;
+---
+
+<section class="mdx-compare">
+	<div>
+		<strong>{left}</strong>
+		<slot name="left" />
+	</div>
+	<div>
+		<strong>{right}</strong>
+		<slot name="right" />
+	</div>
+</section>
+

@@ -1,0 +1,16 @@
+---
+interface Props {
+	title?: string;
+	open?: boolean;
+}
+
+const { title = 'Reveal', open = false } = Astro.props;
+---
+
+<details class="mdx-reveal" open={open}>
+	<summary>{title}</summary>
+	<div>
+		<slot />
+	</div>
+</details>
+

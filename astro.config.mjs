@@ -1,13 +1,26 @@
 // @ts-check
 
 import mdx from '@astrojs/mdx';
+import { unified } from '@astrojs/markdown-remark';
 import sitemap from '@astrojs/sitemap';
+import svelte from '@astrojs/svelte';
 import { defineConfig, fontProviders } from 'astro/config';
+import rehypeKatex from 'rehype-katex';
+import remarkMath from 'remark-math';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://example.com',
-	integrations: [mdx(), sitemap()],
+	site: 'https://zicewang.github.io',
+	markdown: {
+		processor: unified({
+			remarkPlugins: [remarkMath],
+			rehypePlugins: [rehypeKatex],
+		}),
+		shikiConfig: {
+			theme: 'css-variables',
+		},
+	},
+	integrations: [mdx(), sitemap(), svelte()],
 	fonts: [
 		{
 			provider: fontProviders.local(),
@@ -30,6 +43,14 @@ export default defineConfig({
 					},
 				],
 			},
+		},
+		{
+			provider: fontProviders.google(),
+			name: 'Outfit',
+			cssVariable: '--font-outfit',
+			fallbacks: ['sans-serif'],
+			weights: [400, 600, 700],
+			display: 'swap',
 		},
 	],
 });
