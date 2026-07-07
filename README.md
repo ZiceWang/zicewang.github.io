@@ -1,63 +1,103 @@
-# Astro Starter Kit: Blog
+# Blog
+
+Personal blog and me.
+
+Built with Astro, MDX, Svelte islands, KaTeX, and a custom animated landing dial.
+
+## Stack
+
+- Astro static site generation
+- MDX content collection for blog posts
+- Svelte for interactive islands
+- KaTeX for inline and display LaTeX
+- Shiki with CSS-variable syntax highlighting
+- RSS and sitemap generation
+- Light/dark theme switching
+
+## Development
+
+Install dependencies:
 
 ```sh
-pnpm create astro@latest -- --template blog
+pnpm install
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Start the dev server in background mode:
 
-Features:
+```sh
+pnpm astro dev --background
+```
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+Manage the background server:
 
-## 🚀 Project Structure
+```sh
+pnpm astro dev status
+pnpm astro dev logs
+pnpm astro dev stop
+```
 
-Inside of your Astro project, you'll see the following folders and files:
+Build the static site:
+
+```sh
+pnpm build
+```
+
+Preview the production build:
+
+```sh
+pnpm preview
+```
+
+## Project Structure
 
 ```text
-├── public/
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+src/
+  components/
+    mdx/              Reusable MDX components
+    LandingDial.svelte
+  content/
+    blog/             Markdown and MDX posts
+  layouts/
+    BlogPost.astro
+  pages/
+    blog/
+    index.astro
+  styles/
+    global.css
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Writing Posts
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Blog posts live in `src/content/blog/` as `.md` or `.mdx`.
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+Required frontmatter:
 
-Any static assets, like images, can be placed in the `public/` directory.
+```yaml
+---
+title: 'Post title'
+description: 'Short description'
+pubDate: 'Jul 07 2026'
+---
+```
 
-## 🧞 Commands
+MDX posts can import reusable components:
 
-All commands are run from the root of the project, from a terminal:
+```mdx
+import Callout from '../../components/Callout.astro';
+import Problem from '../../components/mdx/Problem.astro';
+import Video from '../../components/mdx/Video.astro';
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+Supported extras include:
 
-## 👀 Want to learn more?
+- Inline and display LaTeX
+- Copy buttons for code blocks
+- Copy-full-post source button on blog pages
+- Interactive quiz/problem blocks
+- Video embeds
+- Revealable hints
+- Compare panels
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Notes
 
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+The landing page is intentionally interactive and uses a Svelte island. Most article and layout UI should stay in Astro unless it needs client-side state.
