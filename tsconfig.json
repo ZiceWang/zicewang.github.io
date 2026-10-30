@@ -1,8 +1,16 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"],
-  "compilerOptions": {
-    "strictNullChecks": true
-  }
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": false,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"moduleResolution": "bundler"
+	},
+	"include": ["src", "tests", "*.ts"],
+	"exclude": ["src/service-worker"]
 }

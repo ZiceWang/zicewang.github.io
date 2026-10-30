@@ -35,4 +35,3 @@ export function renderInlineMath(value: string) {
 	html += escapeHtml(value.slice(cursor));
 	return html.replaceAll('\\$', '$');
 }
-

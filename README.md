@@ -1,103 +1,87 @@
 # Blog
 
-Personal blog and me.
-
-Built with Astro, MDX, Svelte islands, KaTeX, and a custom animated landing dial.
-
-## Stack
-
-- Astro static site generation
-- MDX content collection for blog posts
-- Svelte for interactive islands
-- KaTeX for inline and display LaTeX
-- Shiki with CSS-variable syntax highlighting
-- RSS and sitemap generation
-- Light/dark theme switching
+Personal blog built with SvelteKit 3, Svelte 5, MDsveX, KaTeX, and Shiki.
 
 ## Development
 
-Install dependencies:
+Requires Node.js 22.17+ and pnpm 10.
 
 ```sh
 pnpm install
+pnpm dev
 ```
 
-Start the dev server in background mode:
+The development server runs in the background at http://localhost:4321.
 
 ```sh
-pnpm astro dev --background
+pnpm dev:status
+pnpm dev:logs
+pnpm dev:stop
 ```
 
-Manage the background server:
+## Validation and deployment
 
 ```sh
-pnpm astro dev status
-pnpm astro dev logs
-pnpm astro dev stop
-```
-
-Build the static site:
-
-```sh
+pnpm check
 pnpm build
+pnpm test
 ```
 
-Preview the production build:
+Browser tests run against the production build on port 4322 and cover desktop and mobile navigation, persistent header visibility, themes, article interactions, and static feeds. Windows uses installed Microsoft Edge. On other systems, install Chromium once with `pnpm exec playwright install chromium`.
 
-```sh
-pnpm preview
-```
+`pnpm build` generates the complete static site in `dist/`, suitable for GitHub Pages. All article URLs can be opened directly. RSS, canonical metadata, and sitemap URLs use `SITE_URL` in `src/consts.ts`. Preview the built site with `pnpm preview` after stopping the development server.
 
-## Project Structure
+## Structure
 
-```text
-src/
-  components/
-    mdx/              Reusable MDX components
-    LandingDial.svelte
-  content/
-    blog/             Markdown and MDX posts
-  layouts/
-    BlogPost.astro
-  pages/
-    blog/
-    index.astro
-  styles/
-    global.css
-```
+- `src/routes/+layout.svelte`: shared header, footer, fonts, and global styles
+- `src/routes/`: home, archive, about, article pages, RSS, and sitemap endpoints
+- `src/components/`: landing dial, article layout, and reusable content components
+- `src/content/blog/`: Markdown and Svelte Markdown articles
+- `src/lib/server/posts.ts`: validated frontmatter, ordering, and original sources
+- `static/`: favicons and public images
 
-## Writing Posts
+The home page has its own full-screen design. Blog, About, and article pages share one mounted header through SvelteKit's root layout. Navigation uses the built-in client router without snapshot animations or page-load event handlers.
 
-Blog posts live in `src/content/blog/` as `.md` or `.mdx`.
+## Writing posts
 
-Required frontmatter:
+Use `.md` for plain Markdown and `.svx` for Markdown with Svelte components. A filename supplies its slug: `hello.md` becomes `/blog/hello/`.
 
 ```yaml
 ---
 title: 'Post title'
 description: 'Short description'
-pubDate: 'Jul 07 2026'
+pubDate: '2026-07-07'
+# Optional:
+# updatedDate: '2026-07-08'
+# heroImage: '/images/cover.jpg'
 ---
 ```
 
-MDX posts can import reusable components:
+Svelte Markdown imports components in a script block:
 
-```mdx
-import Callout from '../../components/Callout.astro';
-import Problem from '../../components/mdx/Problem.astro';
-import Video from '../../components/mdx/Video.astro';
+```svx
+<script>
+	import Callout from '../../components/Callout.svelte';
+	import Problem from '../../components/mdx/Problem.svelte';
+</script>
+
+<Callout title="Note">
+
+Markdown content, including $E = mc^2$, goes here.
+
+</Callout>
 ```
 
-Supported extras include:
+Keep blank lines around Markdown inside component tags. For component props containing TeX braces, pass a JavaScript string expression, for example `answer={'Euler: $e^{i\\pi} + 1 = 0$'}`.
 
-- Inline and display LaTeX
-- Copy buttons for code blocks
-- Copy-full-post source button on blog pages
-- Interactive quiz/problem blocks
-- Video embeds
-- Revealable hints
-- Compare panels
+Supported features include inline/display math, syntax highlighting, code/source copying, LaTeX-aware formula copying, interactive questions, video embeds, revealable hints, comparison panels, and footnotes.
 
-## Notes
+Fonts are served locally; building and viewing the site does not require Google Fonts requests.
 
-The landing page is intentionally interactive and uses a Svelte island. Most article and layout UI should stay in Astro unless it needs client-side state.
+## Publishing
+
+GitHub Actions checks types, builds the static site, runs browser tests, and deploys the default branch to GitHub Pages. Other branches and pull requests run validation without deploying.
+
+Live site: https://zicewang.github.io/
+
+The RSS subscription page is at `/rss/`; readers subscribe to `/rss.xml`. The feed contains article summaries and permanent links.

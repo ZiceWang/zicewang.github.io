@@ -1,11 +1,12 @@
 <script>
 	import { onMount } from 'svelte';
+	import ThemeToggle from './ThemeToggle.svelte';
 
 	export let navItems = [];
 	export let postItems = [];
 
 	const TICK_COUNT = 88;
-	const TICK_STEP = 4.6;
+	const TICK_STEP = 360 / TICK_COUNT;
 	const REVEAL_MS = 300;
 
 	let stage;
@@ -16,6 +17,7 @@
 	let ticks = [];
 	let innerTicks = [];
 	let renderedItems = [];
+	let geometry;
 
 	const state = {
 		offset: 0,
@@ -31,18 +33,40 @@
 		raf: 0,
 	};
 
-	function getGeometry() {
-		const rect = stage.getBoundingClientRect();
-		const isMobile = window.matchMedia('(max-width: 820px)').matches;
-		const radius = isMobile ? Math.max(rect.width * 0.78, 360) : Math.max(rect.height * 0.72, 520);
-
-		return {
-			cx: isMobile ? -radius * 0.08 : -radius * 0.92,
-			cy: isMobile ? rect.height * 0.53 : rect.height * 0.5,
+	function updateGeometry() {
+		if (!stage) return;
+		const { width, height } = stage.getBoundingClientRect();
+		const arcX = Math.min(80, width * 0.1);
+		const labelOffset = Math.min(88, Math.max(32, width * 0.12));
+		const radius = Math.max(height * 0.65, width * 0.65) * 1.5;
+		const itemWidth = Math.max(1, width - arcX - labelOffset - 42);
+		const itemHeight = Math.max(
+			72,
+			...Array.from(stage.querySelectorAll('.dial-item'), (item) => item.offsetHeight),
+		);
+		const spacing = itemHeight + itemWidth * 0.15 + 24;
+		state.itemStep = Math.min(
+			38,
+			Math.max(18, (Math.asin(Math.min(0.9, spacing / (radius + labelOffset))) * 180) / Math.PI),
+		);
+		state.itemAngles = getItemAngles(items.length);
+		state.targetOffset = offsetForIndex(state.targetIndex);
+		state.offset = state.targetOffset;
+		geometry = {
+			cx: arcX - radius,
+			cy: height / 2,
 			radius,
-			start: -55,
-			end: 55,
+			labelOffset,
+			itemWidth,
+			start: -90,
+			end: 90,
 		};
+	}
+
+	function measureItem(node) {
+		const observer = new ResizeObserver(updateGeometry);
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
 	}
 
 	function pointOnArc(angle, geometry) {
@@ -74,6 +98,11 @@
 		return 'tick minor';
 	}
 
+	function visibleAngle(angle) {
+		const normalized = ((((angle + 180) % 360) + 360) % 360) - 180;
+		return normalized >= geometry.start && normalized <= geometry.end ? normalized : null;
+	}
+
 	function resetMotion(nextItems) {
 		const bornAt = performance.now();
 		state.motion = nextItems.map(() => ({ bornAt, hover: 0, hovering: false }));
@@ -99,7 +128,7 @@
 	}
 
 	function snapToNearestItem() {
-		state.targetIndex = nearestIndex();
+		state.targetIndex = nearestIndex(state.targetOffset);
 		state.targetOffset = offsetForIndex(state.targetIndex);
 	}
 
@@ -113,7 +142,14 @@
 			const blogItems =
 				postItems.length > 0
 					? postItems
-					: [{ label: 'No posts yet', meta: 'Soon', subtitle: 'The archive is waiting.', href: '/blog/' }];
+					: [
+							{
+								label: 'No posts yet',
+								meta: 'Soon',
+								subtitle: 'The archive is waiting.',
+								href: '/blog/',
+							},
+						];
 			items = [
 				{ label: 'Back', subtitle: 'Return to the main navigation dial', mode: 'nav' },
 				{ label: 'All posts', subtitle: 'Open the full archive as a list', href: '/blog/' },
@@ -132,11 +168,27 @@
 		state.targetOffset = offsetForIndex(state.targetIndex);
 		state.offset = state.targetOffset;
 		resetMotion(items);
+		updateGeometry();
 	}
 
 	function tune(steps) {
 		state.targetIndex = clampIndex(state.targetIndex + steps);
 		state.targetOffset = offsetForIndex(state.targetIndex);
+	}
+
+	function handleKeydown(event) {
+		if (['ArrowDown', 'ArrowRight'].includes(event.key)) tune(1);
+		else if (['ArrowUp', 'ArrowLeft'].includes(event.key)) tune(-1);
+		else if (event.key === 'Home') tune(-items.length);
+		else if (event.key === 'End') tune(items.length);
+		else return;
+		event.preventDefault();
+	}
+
+	function focusItem(index) {
+		state.targetIndex = index;
+		state.targetOffset = offsetForIndex(index);
+		setHover(index, true);
 	}
 
 	function handleWheel(event) {
@@ -155,7 +207,9 @@
 
 	function handlePointerMove(event) {
 		if (!state.dragging) return;
-		state.targetOffset += (state.lastY - event.clientY) * 0.16;
+		const dragDistance = Math.max(80, stage.clientHeight * 0.25);
+		const offsetPerPixel = state.itemStep / state.angleScale / dragDistance;
+		state.targetOffset += (event.clientY - state.lastY) * offsetPerPixel;
 		state.targetIndex = nearestIndex(state.targetOffset);
 		state.lastY = event.clientY;
 	}
@@ -172,32 +226,32 @@
 	}
 
 	function renderFrame() {
-		if (!stage) return;
-
-		const geometry = getGeometry();
+		if (!stage || !geometry) return;
 		const now = performance.now();
 		state.offset += (state.targetOffset - state.offset) * 0.16;
 		state.itemAngles = getItemAngles(items.length);
 
 		arcPath = describeArc(geometry);
 		ticks = Array.from({ length: TICK_COUNT }, (_, index) => {
-			const angle = -190 + index * TICK_STEP + state.offset * state.angleScale;
-			const normalized = ((angle + 180) % 360) - 180;
+			const angle = visibleAngle(-180 + index * TICK_STEP + state.offset * state.angleScale);
+			if (angle === null) return null;
 			const point = pointOnArc(angle, geometry);
-			const opacity = 1 - Math.min(Math.abs(normalized) / 90, 0.72);
+			const opacity = 1 - Math.min(Math.abs(angle) / 90, 0.72);
 
 			return {
 				className: tickClass(index),
 				style: `opacity: ${Math.max(opacity, 0)}; transform: translate(${point.x}px, ${point.y}px) rotate(${angle}deg);`,
 			};
-		});
+		}).filter(Boolean);
 
-		const innerStep = 2.9;
+		const innerStep = 360 / 134;
 		innerTicks = Array.from({ length: 134 }, (_, index) => {
-			const angle = -188 + index * innerStep + now * 0.018 + state.offset * state.angleScale * 0.28;
-			const normalized = ((angle + 180) % 360) - 180;
+			const angle = visibleAngle(
+				-180 + index * innerStep + now * 0.018 + state.offset * state.angleScale * 0.28,
+			);
+			if (angle === null) return null;
 			const point = pointOnInnerArc(angle, geometry, 42);
-			const centerFalloff = 1 - Math.min(Math.abs(normalized) / 78, 0.82);
+			const centerFalloff = 1 - Math.min(Math.abs(angle) / 78, 0.82);
 			const pulse = 0.5 + Math.sin(now * 0.006 + index * 0.7) * 0.5;
 			const opacity = Math.max(0.08, centerFalloff * (0.36 + pulse * 0.34));
 			const tier = index % 9 === 0 ? 'sync' : index % 3 === 0 ? 'readout' : 'micro';
@@ -206,7 +260,7 @@
 				className: `inner-tick ${tier}`,
 				style: `opacity: ${opacity}; transform: translate(${point.x}px, ${point.y}px) rotate(${angle}deg);`,
 			};
-		});
+		}).filter(Boolean);
 
 		const activeIndex = nearestIndex(state.offset);
 		renderedItems = items.map((item, index) => {
@@ -220,16 +274,16 @@
 			const acceptsHover = age >= 1;
 			motion.hover += ((acceptsHover && motion.hovering ? 1 : 0) - motion.hover) * 0.18;
 
-			const radialDistance = 118 - (1 - reveal) * 64;
+			const radialDistance = geometry.labelOffset - (1 - reveal) * 24;
 			const hoverDistance = motion.hover * 18;
 			const opacity = 1 - Math.min(Math.abs(angle) / 95, 0.46);
 			const x = point.x + Math.cos(radians) * radialDistance;
-			const y = point.y + Math.sin(radians) * radialDistance - 18;
+			const y = point.y + Math.sin(radians) * radialDistance;
 
 			return {
 				...item,
 				active: index === activeIndex,
-				style: `opacity: ${Math.max(opacity * reveal, 0.12)}; transform: translate(${x}px, ${y}px) rotate(${angle}deg);`,
+				style: `width: ${geometry.itemWidth}px; opacity: ${Math.max(opacity * reveal, 0.12)}; transform: translate(${x}px, ${y}px) translateY(-50%) rotate(${angle}deg);`,
 				contentStyle: `transform: translate(${Math.cos(radians) * hoverDistance}px, ${Math.sin(radians) * hoverDistance}px);`,
 			};
 		});
@@ -239,9 +293,13 @@
 
 	onMount(() => {
 		resetMotion(items);
+		updateGeometry();
+		const observer = new ResizeObserver(updateGeometry);
+		observer.observe(stage);
 		state.raf = requestAnimationFrame(renderFrame);
 
 		return () => {
+			observer.disconnect();
 			cancelAnimationFrame(state.raf);
 			window.clearTimeout(state.snapTimer);
 		};
@@ -249,36 +307,23 @@
 </script>
 
 <main class="landing" aria-label="Zice Wang landing page">
-	<button class="theme-toggle landing-theme" type="button" data-theme-toggle aria-label="Switch theme">
-		<svg class="sun" viewBox="0 0 24 24" aria-hidden="true">
-			<circle cx="12" cy="12" r="4"></circle>
-			<path d="M12 2v2"></path>
-			<path d="M12 20v2"></path>
-			<path d="m4.93 4.93 1.41 1.41"></path>
-			<path d="m17.66 17.66 1.41 1.41"></path>
-			<path d="M2 12h2"></path>
-			<path d="M20 12h2"></path>
-			<path d="m6.34 17.66-1.41 1.41"></path>
-			<path d="m19.07 4.93-1.41 1.41"></path>
-		</svg>
-		<svg class="moon" viewBox="0 0 24 24" aria-hidden="true">
-			<path d="M20.6 14.5A8.2 8.2 0 0 1 9.5 3.4a7.6 7.6 0 1 0 11.1 11.1Z"></path>
-		</svg>
-	</button>
+	<ThemeToggle class="landing-theme" />
 
 	<section class="brand-panel" aria-label="Identity">
 		<p class="brand-kicker">Personal blog / experiments</p>
 		<h1 class="brand-title">Zice Wang</h1>
-		<p class="brand-note">Scroll the instrument. Pick a mark. The blog is the playground.</p>
 	</section>
 
 	<section class="dial-panel" aria-label="Navigation dial">
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions (This composite dial handles arrow keys and contains native links and buttons.) -->
 		<div
 			class="dial-stage"
 			role="application"
+			tabindex="0"
 			aria-label="Rotary navigation control"
 			bind:this={stage}
 			on:wheel={handleWheel}
+			on:keydown={handleKeydown}
 			on:pointerdown={handlePointerDown}
 			on:pointermove={handlePointerMove}
 			on:pointerup={finishDrag}
@@ -305,6 +350,7 @@
 				{#each renderedItems as item, index}
 					{#if item.mode}
 						<button
+							use:measureItem
 							class:is-active={item.active}
 							class="dial-item"
 							style={item.style}
@@ -313,12 +359,14 @@
 							on:pointerdown|stopPropagation
 							on:pointerenter={() => setHover(index, true)}
 							on:pointerleave={() => setHover(index, false)}
-							on:focus={() => setHover(index, true)}
+							on:focus={() => focusItem(index)}
 							on:blur={() => setHover(index, false)}
 						>
 							<span class="dial-content" style={item.contentStyle}>
 								<span class="dial-text">
-									<span class="dial-label">{#if item.labelHtml}{@html item.labelHtml}{:else}{item.label}{/if}</span>
+									<span class="dial-label" title={item.label}
+										>{#if item.labelHtml}{@html item.labelHtml}{:else}{item.label}{/if}</span
+									>
 									{#if item.subtitle}
 										<span class="dial-subtitle">{item.subtitle}</span>
 									{/if}
@@ -330,6 +378,7 @@
 						</button>
 					{:else}
 						<a
+							use:measureItem
 							class:is-active={item.active}
 							class="dial-item"
 							style={item.style}
@@ -339,12 +388,14 @@
 							on:pointerdown|stopPropagation
 							on:pointerenter={() => setHover(index, true)}
 							on:pointerleave={() => setHover(index, false)}
-							on:focus={() => setHover(index, true)}
+							on:focus={() => focusItem(index)}
 							on:blur={() => setHover(index, false)}
 						>
 							<span class="dial-content" style={item.contentStyle}>
 								<span class="dial-text">
-									<span class="dial-label">{#if item.labelHtml}{@html item.labelHtml}{:else}{item.label}{/if}</span>
+									<span class="dial-label" title={item.label}
+										>{#if item.labelHtml}{@html item.labelHtml}{:else}{item.label}{/if}</span
+									>
 									{#if item.subtitle}
 										<span class="dial-subtitle">{item.subtitle}</span>
 									{/if}
@@ -384,18 +435,18 @@
 		--landing-readout-glow: rgba(169, 155, 225, 0.28);
 	}
 
-	:global(html),
-	:global(body) {
+	:global(html:has(.landing)),
+	:global(body:has(.landing)) {
 		height: 100%;
 		overflow: hidden;
 		background: var(--landing-bg);
 	}
 
-	:global(body) {
+	:global(body:has(.landing)) {
 		color: var(--landing-ink);
 	}
 
-	:global(body::before) {
+	:global(body:has(.landing)::before) {
 		position: fixed;
 		inset: 0;
 		pointer-events: none;
@@ -408,17 +459,23 @@
 	}
 
 	.landing {
+		box-sizing: border-box;
 		position: relative;
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		width: 100vw;
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 0;
 		height: 100svh;
-		min-height: 560px;
-		overflow: hidden;
+		height: 100dvh;
+		overflow: clip;
 		isolation: isolate;
 	}
 
 	.brand-panel {
+		box-sizing: border-box;
+		min-width: 0;
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -426,7 +483,7 @@
 		padding: clamp(2rem, 6vw, 7rem);
 	}
 
-	.landing-theme {
+	:global(.landing-theme) {
 		position: fixed;
 		right: clamp(1rem, 4vw, 3rem);
 		top: clamp(1rem, 4vw, 2rem);
@@ -446,28 +503,23 @@
 		max-width: 8ch;
 		margin: 0;
 		font-family: var(--font-outfit);
-		font-size: clamp(4.2rem, 12vw, 11.5rem);
+		font-size: clamp(3rem, min(12vw, 18svh), 11.5rem);
 		font-weight: 700;
 		line-height: 0.82;
 	}
 
-	.brand-note {
-		max-width: 26rem;
-		margin: 2rem 0 0;
-		color: var(--landing-muted);
-		font-size: clamp(1rem, 1.6vw, 1.25rem);
-		line-height: 1.6;
-	}
-
 	.dial-panel {
 		position: relative;
+		display: grid;
+		grid-template-rows: minmax(0, 1fr) auto;
 		min-width: 0;
-		overflow: visible;
+		min-height: 0;
 	}
 
 	.dial-stage {
-		position: absolute;
-		inset: 0;
+		position: relative;
+		min-height: 0;
+		overflow: visible;
 		cursor: ns-resize;
 		touch-action: none;
 	}
@@ -499,6 +551,7 @@
 	.tick,
 	.inner-tick,
 	.dial-item {
+		box-sizing: border-box;
 		position: absolute;
 		left: 0;
 		top: 0;
@@ -562,7 +615,7 @@
 		display: flex;
 		align-items: flex-start;
 		gap: 1rem;
-		min-width: min(34vw, 28rem);
+		min-width: 0;
 		padding: 0.55rem 0;
 		border: 0;
 		background: transparent;
@@ -587,30 +640,39 @@
 	}
 
 	.dial-text {
+		width: 100%;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 0.7rem;
 	}
 
 	.dial-content {
+		width: 100%;
 		display: flex;
+		flex-direction: column;
 		align-items: flex-start;
-		gap: 1rem;
+		gap: 0.5rem;
 		pointer-events: none;
 		user-select: none;
 		will-change: transform;
 	}
 
 	.dial-label {
+		display: block;
+		overflow-wrap: anywhere;
 		font-family: var(--font-outfit);
-		font-size: clamp(2.4rem, 5vw, 6.25rem);
+		font-size: clamp(2rem, min(5vw, 9svh), 6.25rem);
 		font-weight: 700;
-		line-height: 0.86;
-		white-space: nowrap;
+		line-height: 1;
 	}
 
 	.dial-subtitle {
-		max-width: min(30vw, 26rem);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 		color: var(--landing-muted);
 		font-size: clamp(0.9rem, 1.15vw, 1.25rem);
 		line-height: 1.35;
@@ -623,56 +685,60 @@
 	}
 
 	.mode-chip {
-		position: absolute;
-		right: clamp(1rem, 4vw, 4rem);
-		bottom: clamp(1rem, 4vw, 3rem);
+		padding: 1rem clamp(1rem, 4vw, 4rem);
 		display: flex;
+		justify-content: flex-end;
 		align-items: center;
 		gap: 0.9rem;
 		color: var(--landing-muted);
 		font-size: 0.82rem;
 	}
 
-	@media (max-width: 820px) {
+	@media (max-width: 639px), (max-width: 820px) and (min-height: 601px) {
 		.landing {
 			grid-template-columns: 1fr;
-			min-height: 100svh;
+			grid-template-rows: auto minmax(0, 1fr);
 		}
 
 		.brand-panel {
 			justify-content: flex-start;
-			height: 40svh;
-			padding: 2rem 1.25rem 0;
+			padding: 2rem 1.25rem 1rem;
+		}
+
+		.brand-kicker {
+			padding-right: 2.5rem;
 		}
 
 		.brand-title {
 			max-width: none;
-			font-size: clamp(3.5rem, 18vw, 6rem);
+			font-size: clamp(2.7rem, 14vw, 6rem);
 			line-height: 0.86;
 		}
 
-		.brand-note {
-			max-width: 21rem;
-			margin-top: 1rem;
-			font-size: 0.95rem;
-		}
-
-		.dial-panel {
-			position: absolute;
-			inset: 28svh 0 0;
-		}
-
-		.dial-item {
-			min-width: 13rem;
-		}
-
 		.dial-label {
-			font-size: clamp(2.2rem, 10vw, 4.4rem);
+			font-size: clamp(2rem, min(10vw, 9svh), 4.4rem);
 		}
 
 		.dial-subtitle {
-			max-width: 15rem;
 			font-size: 0.88rem;
+		}
+	}
+
+	@media (max-height: 500px) {
+		.brand-panel {
+			padding: 1.25rem;
+		}
+		.brand-kicker {
+			margin-bottom: 0.5rem;
+		}
+		.brand-title {
+			font-size: clamp(2rem, 12svh, 4rem);
+		}
+		.dial-label {
+			font-size: clamp(1.65rem, 7svh, 2.5rem);
+		}
+		.dial-subtitle {
+			display: none;
 		}
 	}
 </style>

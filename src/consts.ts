@@ -3,3 +3,5 @@
 
 export const SITE_TITLE = 'Zice Wang';
 export const SITE_DESCRIPTION = 'Personal blog by Zice Wang.';
+
+export const SITE_URL = 'https://zicewang.github.io';

@@ -1,3 +1,21 @@
+@font-face {
+	font-family: 'Atkinson';
+	src: url('../assets/fonts/atkinson-regular.woff') format('woff');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Atkinson';
+	src: url('../assets/fonts/atkinson-bold.woff') format('woff');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+:root {
+	--font-atkinson: 'Atkinson', sans-serif;
+	--font-outfit: 'Outfit', sans-serif;
+}
 /*
   The CSS in this style tag is based off of Bear Blog's default CSS.
   https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
@@ -22,20 +40,19 @@
 	--code-fg: rgb(var(--gray-dark));
 	--code-ui: var(--black);
 	--code-edge: rgba(111, 90, 168, 0.24);
-	--astro-code-foreground: #34313d;
-	--astro-code-background: transparent;
-	--astro-code-token-constant: #7b4fa3;
-	--astro-code-token-string: #4d7f52;
-	--astro-code-token-comment: #7e7890;
-	--astro-code-token-keyword: #9a426f;
-	--astro-code-token-parameter: #8a5f30;
-	--astro-code-token-function: #3f66a6;
-	--astro-code-token-string-expression: #4d7f52;
-	--astro-code-token-punctuation: #635d70;
-	--astro-code-token-link: #3f66a6;
+	--syntax-foreground: #34313d;
+	--syntax-background: transparent;
+	--syntax-token-constant: #7b4fa3;
+	--syntax-token-string: #4d7f52;
+	--syntax-token-comment: #7e7890;
+	--syntax-token-keyword: #9a426f;
+	--syntax-token-parameter: #8a5f30;
+	--syntax-token-function: #3f66a6;
+	--syntax-token-string-expression: #4d7f52;
+	--syntax-token-punctuation: #635d70;
+	--syntax-token-link: #3f66a6;
 	--gray-gradient: rgba(var(--gray-light), 42%), #fff;
-	--box-shadow:
-		0 2px 6px rgba(var(--gray), 14%), 0 12px 36px rgba(var(--gray), 20%);
+	--box-shadow: 0 2px 6px rgba(var(--gray), 14%), 0 12px 36px rgba(var(--gray), 20%);
 }
 
 :root[data-theme='dark'] {
@@ -56,19 +73,18 @@
 	--code-fg: #f2edf9;
 	--code-ui: 242, 237, 249;
 	--code-edge: rgba(169, 155, 225, 0.28);
-	--astro-code-foreground: #f2edf9;
-	--astro-code-background: transparent;
-	--astro-code-token-constant: #cdbdff;
-	--astro-code-token-string: #9ad6a4;
-	--astro-code-token-comment: #9b93ad;
-	--astro-code-token-keyword: #ff8faf;
-	--astro-code-token-parameter: #ffc078;
-	--astro-code-token-function: #8ec7ff;
-	--astro-code-token-string-expression: #9ad6a4;
-	--astro-code-token-punctuation: #d7d0e4;
-	--astro-code-token-link: #8ec7ff;
-	--box-shadow:
-		0 2px 8px rgba(0, 0, 0, 24%), 0 18px 48px rgba(0, 0, 0, 34%);
+	--syntax-foreground: #f2edf9;
+	--syntax-background: transparent;
+	--syntax-token-constant: #cdbdff;
+	--syntax-token-string: #9ad6a4;
+	--syntax-token-comment: #9b93ad;
+	--syntax-token-keyword: #ff8faf;
+	--syntax-token-parameter: #ffc078;
+	--syntax-token-function: #8ec7ff;
+	--syntax-token-string-expression: #9ad6a4;
+	--syntax-token-punctuation: #d7d0e4;
+	--syntax-token-link: #8ec7ff;
+	--box-shadow: 0 2px 8px rgba(0, 0, 0, 24%), 0 18px 48px rgba(0, 0, 0, 34%);
 }
 body {
 	font-family: var(--font-atkinson);
@@ -215,7 +231,8 @@ code {
 	border-radius: 2px;
 	color: rgb(var(--black));
 	font-family:
-		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,
+		monospace;
 	font-size: 0.86em;
 }
 .code-frame {
@@ -234,14 +251,15 @@ pre {
 	border: 0;
 	border-radius: 0;
 	background: transparent !important;
-	color: var(--astro-code-foreground) !important;
+	color: var(--syntax-foreground) !important;
 	box-shadow: none;
 }
 pre > code {
 	all: unset;
 	color: var(--code-fg);
 	font-family:
-		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,
+		monospace;
 	font-size: 0.88rem;
 	line-height: 1.65;
 }
@@ -260,7 +278,8 @@ pre > code {
 	color: rgb(var(--gray));
 	content: attr(data-language);
 	font-family:
-		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo,
+		monospace;
 	font-size: 0.68rem;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
@@ -284,8 +303,8 @@ pre > code {
 	transition:
 		opacity 150ms ease,
 		color 150ms ease,
-	border-color 150ms ease,
-	background 150ms ease;
+		border-color 150ms ease,
+		background 150ms ease;
 }
 .copy-code svg {
 	width: 1rem;
@@ -452,9 +471,7 @@ hr {
 }
 .problem-choices button.is-selected {
 	border-color: color-mix(in srgb, var(--accent) 72%, transparent);
-	background:
-		linear-gradient(90deg, var(--accent-wash), transparent 56%),
-		var(--surface-strong);
+	background: linear-gradient(90deg, var(--accent-wash), transparent 56%), var(--surface-strong);
 	box-shadow:
 		inset 3px 0 0 var(--accent),
 		0 10px 24px rgba(var(--black), 8%);
@@ -552,6 +569,17 @@ hr {
 }
 .footnotes p {
 	margin: 0.4rem 0;
+}
+.footnotes > hr {
+	display: none;
+}
+.footnotes li,
+.footnote-ref,
+sup[id^='fnref-'] {
+	scroll-margin-top: 6rem;
+}
+.footnote-backref {
+	margin-inline-start: 0.3em;
 }
 .theme-toggle {
 	display: grid;

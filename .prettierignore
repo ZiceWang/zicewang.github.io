@@ -1,0 +1,11 @@
+node_modules/
+.svelte-kit/
+.astro/
+.dev/
+dist/
+pnpm-lock.yaml
+test-results/
+playwright-report/
+
+# MDsveX component attributes require its own parser
+*.svx

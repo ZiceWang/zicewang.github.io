@@ -1,22 +1,27 @@
 ## Development
 
-When starting the dev server, use background mode:
+This project uses SvelteKit 3 and Svelte 5, with MDsveX for article content.
 
-```
-astro dev --background
-```
+Start the development server in background mode with `pnpm dev`.
+Manage it with `pnpm dev:stop`, `pnpm dev:status`, and `pnpm dev:logs`.
+The development URL is http://localhost:4321.
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+## Validation
+
+Run `pnpm check` and `pnpm build` after implementation changes.
+Run `pnpm test` after navigation, article rendering, or interactive component changes; tests use the production build on port 4322.
+
+## Architecture
+
+Put shared navigation in `src/routes/+layout.svelte` so the header remains mounted across content routes.
+Use Svelte lifecycle/actions for browser interactions, with cleanup on unmount.
+Posts live in `src/content/blog/` as `.md` or `.svx`. Validate frontmatter in `src/lib/server/posts.ts`.
+Keep Markdown content separated from surrounding component tags with blank lines, and use JavaScript string props for TeX with braces.
+Do not format `.svx` with a plain Markdown formatter; it can split component attributes.
 
 ## Documentation
 
-Full documentation: https://docs.astro.build
-
-Consult these guides before working on related tasks:
-
-- [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
-- [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)
-- [Using React, Vue, Svelte, or other framework components](https://docs.astro.build/en/guides/framework-components/)
-- [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
-- [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
-- [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+- SvelteKit routing: https://svelte.dev/docs/kit/routing
+- Svelte components: https://svelte.dev/docs/svelte/overview
+- Static builds: https://svelte.dev/docs/kit/adapter-static
+- MDsveX: https://github.com/pngwn/MDsveX

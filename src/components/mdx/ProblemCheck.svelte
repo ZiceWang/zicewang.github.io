@@ -79,14 +79,18 @@
 	{/if}
 
 	<div class="problem-actions">
-		<button type="button" on:click={() => (checked = true)} disabled={choices.length > 0 && selected < 0}>
+		<button
+			type="button"
+			on:click={() => (checked = true)}
+			disabled={choices.length > 0 && selected < 0}
+		>
 			Check
 		</button>
 		<button type="button" on:click={reset}>Reset</button>
 	</div>
 
 	{#if hasAnswer}
-		<p class:is-correct class:is-wrong={!isCorrect} class="problem-result">
+		<p class:is-correct={isCorrect} class:is-wrong={!isCorrect} class="problem-result">
 			{isCorrect ? 'Correct.' : 'Not quite.'}
 		</p>
 	{/if}
