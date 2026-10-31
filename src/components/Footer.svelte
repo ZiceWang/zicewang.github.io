@@ -1,10 +1,12 @@
 <script>
+	import XLink from './XLink.svelte';
 	const today = new Date();
 </script>
 
 <footer>
 	&copy; {today.getFullYear()} Zice Wang. All rights reserved.
 	<div class="social-links">
+		<XLink />
 		<a href="/rss/" class="rss-link" aria-label="RSS subscription">
 			<svg
 				width="20"

@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { SITE_TITLE } from '../consts';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import XLink from './XLink.svelte';
 	const section = $derived(page.url.pathname.split('/').filter(Boolean)[0] ?? '');
 </script>
 
@@ -25,6 +26,7 @@
 		</div>
 		<div class="social-links">
 			<ThemeToggle />
+			<span class="x-link"><XLink /></span>
 			<a class="github-link" href="https://github.com/ZiceWang" target="_blank">
 				<span class="sr-only">Go to Zice Wang's GitHub profile</span>
 				<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32"
@@ -98,8 +100,21 @@
 		height: 1.25rem;
 	}
 	@media (max-width: 720px) {
-		.social-links .github-link {
+		.social-links .github-link,
+		.social-links .x-link {
 			display: none;
+		}
+	}
+	@media (max-width: 380px) {
+		header {
+			padding-inline: 0.75rem;
+		}
+		nav {
+			gap: 0.25rem;
+		}
+		nav a {
+			padding-inline: 0.35rem;
+			font-size: 0.9em;
 		}
 	}
 </style>
